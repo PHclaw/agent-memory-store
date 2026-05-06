@@ -13,6 +13,35 @@
 
 ---
 
+## 🏗️ Architecture
+
+```mermaid
+graph LR
+    subgraph "Agent A (Private)"
+    A1["Memory A1"]
+    A2["Memory A2"]
+    A3["..."]
+    end
+    
+    subgraph "Agent B (Private)"
+    B1["Memory B1"]
+    B2["Memory B2"]
+    end
+    
+    subgraph "Shared Space"
+    S1["Shared Memory"]
+    S2["Shared Memory"]
+    end
+    
+    A1 --> S1
+    B1 --> S1
+    A2 -.->|not visible| B1
+```
+
+Each agent has **completely isolated** private memory. Shared space is opt-in.
+
+---
+
 Built this because I was tired of agents forgetting everything between conversations. No magic, no vector embeddings — just a simple key-value store with proper isolation between agents.
 
 When you run multiple AI agents, they inevitably step on each other's toes. Agent A reads Agent B's memories, shared context gets mixed up, and suddenly your customer support bot is talking about internal devops stuff.
