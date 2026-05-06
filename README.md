@@ -1,152 +1,165 @@
-# Agent Memory Store
+<div align="center">
 
-> Give your AI agents long-term memory that actually works.
+# 🧠 Agent Memory Store
+
+**Give your AI agents long-term memory that actually works.**
+
+[![PyPI](https://img.shields.io/pypi/v/agent-memory-store?color=blue)](https://pypi.org/project/agent-memory-store/)
+[![Python](https://img.shields.io/pypi/pyversions/agent-memory-store)](https://pypi.org/project/agent-memory-store/)
+[![License](https://img.shields.io/github/license/PHclaw/agent-memory-store)](LICENSE)
+[![Tests](https://img.shields.io/badge/tests-passing-green)](tests/)
+
+</div>
+
+---
 
 Built this because I was tired of agents forgetting everything between conversations. No magic, no vector embeddings — just a simple key-value store with proper isolation between agents.
 
-## Why
-
 When you run multiple AI agents, they inevitably step on each other's toes. Agent A reads Agent B's memories, shared context gets mixed up, and suddenly your customer support bot is talking about internal devops stuff.
 
-This library solves that by giving each agent its own private memory space, with optional shared areas for when you actually want agents to communicate.
+This library solves that. 🎯
 
-## Install
+## ✨ Features
+
+| | |
+|---|---|
+| 🔒 **Agent Isolation** | Each agent gets its own private memory space |
+| 🤝 **Shared Spaces** | Optional shared areas for inter-agent communication |
+| 💬 **Session Tracking** | Group memories by conversation |
+| ⏳ **TTL Support** | Auto-expire old memories |
+| ⚡ **Zero Config** | In-memory by default, no external services needed |
+| 💾 **Pluggable Backends** | In-memory, SQLite, JSON file |
+
+## 📦 Install
 
 ```bash
 pip install agent-memory-store
 ```
 
-Requires Python 3.9+.
+> Requires Python 3.9+
 
-## Quick Example
+## 🚀 Quick Example
 
 ```python
 from agent_memory_store import AgentMemoryStore
 
 store = AgentMemoryStore()
 
-# Agent gets its own isolated memory
+# Give an agent its own memory
 memory = store.get_agent_memory("support-bot")
 
-# Remember things
+# Remember stuff
 memory.add("Customer asked about enterprise pricing")
 memory.add("FAQ: cancellation takes 24h to process")
 
-# Search works
+# Search later
 results = memory.search("pricing")
 ```
 
-That's it. No setup, no configuration, no external services.
+That's it. No setup, no config, no external services.
 
-## Multi-Agent Setup
+---
+
+## 🔒 Multi-Agent Isolation
+
+Each agent's memory is completely private by default:
 
 ```python
 store = AgentMemoryStore()
 
-# Each agent has completely separate memory
-agent1 = store.get_agent_memory("sales-bot")
-agent2 = store.get_agent_memory("support-bot")
+sales = store.get_agent_memory("sales-bot")
+support = store.get_agent_memory("support-bot")
 
-agent1.add("Q3 sales target: $500k")
-agent2.add("Refund policy updated")
+sales.add("Q3 target: $500k")
+support.add("Refund policy updated")
 
-# Agents can't see each other's memories
-agent1.search("refund")  # empty
-agent2.search("sales")   # empty
+# They can't see each other's memories
+sales.search("refund")   # → []
+support.search("sales")  # → []
 ```
 
-## Shared Memory (When Needed)
+## 🤝 Shared Memory
+
+When agents need to share knowledge:
 
 ```python
 store = AgentMemoryStore()
 
-# Create a shared space both agents can access
+# Create a shared space
 shared = store.get_shared_memory("product-knowledge")
+shared.add("🚀 Product launch: May 15th")
 
-# Give both agents access
+# Grant access to multiple agents
 sales = store.get_agent_memory("sales-bot", shared_spaces=["product-knowledge"])
 support = store.get_agent_memory("support-bot", shared_spaces=["product-knowledge"])
 
-# Add to shared space
-shared.add("Product launch: May 15th")
-
-# Both agents see it
-sales.search("launch")   # finds it
-support.search("launch") # finds it
+# Both see the shared memory
+sales.search("launch")   # ✅ finds it
+support.search("launch") # ✅ finds it
 ```
 
-## Session Tracking
+## 💬 Session Tracking
 
-Useful when you want to group memories by conversation:
+Group memories by conversation:
 
 ```python
 memory = store.get_agent_memory("support-bot")
 
 with memory.session("conv-12345") as s:
     s.add("Customer: I can't login")
-    s.add("Solution: Reset password sent")
+    s.add("Solution: Password reset email sent")
 
-# Later: get all memories from this conversation
+# Pull all memories from a specific conversation
 memory.get_by_session("conv-12345")
 ```
 
-## Auto-Expiring Memories
+## ⏳ Auto-Expiring Memories
 
 ```python
 from datetime import timedelta
 
-memory = store.get_agent_memory("temp-agent")
-
-# This memory expires in 1 hour
-memory.add(
-    "Temporary context for current task",
-    ttl=timedelta(hours=1)
-)
+memory.add("Temp context for current task", ttl=timedelta(hours=1))
+# Poof. Gone after 1 hour.
 ```
 
-## What This Is Not
+---
 
-- Not a vector database. No embeddings, no semantic search.
-- Not for storing huge amounts of data. It's an in-memory store with optional SQLite/JSON persistence.
-- Not magic. It's a dictionary with extra features.
+## 💾 Backends
 
-## What This Is
+| Backend | Use Case | Config |
+|---|---|---|
+| `memory` _(default)_ | Development, testing | `AgentMemoryStore()` |
+| `sqlite` | Persistent, single-process | `AgentMemoryStore(backend="sqlite", path="./memories.db")` |
+| `json` | Persistent, human-readable | `AgentMemoryStore(backend="json", path="./memories.json")` |
 
-- Fast. Just Python dicts under the hood.
-- Simple. 5 minute learning curve.
-- Isolated. Agents can't accidentally read each other's memories.
-- No dependencies beyond Python standard library.
+---
 
-## API
+## 📖 API
 
-### AgentMemoryStore
+### `AgentMemoryStore`
 
 ```python
 store = AgentMemoryStore()
 
-# Get an agent's memory
-memory = store.get_agent_memory(agent_id, shared_spaces=["space1", "space2"])
-
-# Create shared space
+memory = store.get_agent_memory(agent_id, shared_spaces=[...])
 shared = store.get_shared_memory(space_id)
 
-# List stuff
-store.list_agents()        # -> ["sales-bot", "support-bot"]
-store.list_shared_spaces() # -> ["product-knowledge"]
+store.list_agents()        # → ["sales-bot", "support-bot"]
+store.list_shared_spaces() # → ["product-knowledge"]
 ```
 
-### AgentMemory
+### `AgentMemory`
 
 ```python
 memory.add(content, metadata=None, ttl=None, session_id=None)
-memory.search(query, limit=10)
-memory.get_all()
-memory.get_by_session(session_id)
-memory.delete(memory_id)
-memory.clear()
+memory.search(query, limit=10)   # → list[MemorySearchResult]
+memory.get_all()                  # → list[Memory]
+memory.get_by_session(session_id) # → list[Memory]
+memory.delete(memory_id)          # → bool
+memory.clear()                    # clear all for this agent
 ```
 
-### SharedMemory
+### `SharedMemory`
 
 ```python
 shared.add(content, metadata=None, ttl=None)
@@ -155,6 +168,23 @@ shared.get_all()
 shared.clear()
 ```
 
-## License
+---
 
-MIT — do whatever you want with it.
+## ⚠️ What This Is Not
+
+- ❌ Not a vector database — no embeddings, no semantic search
+- ❌ Not for huge data — it's an in-memory store with optional persistence
+- ❌ Not distributed — single process only (for now)
+
+## ✅ What This Is
+
+- ✅ Fast — just Python dicts under the hood
+- ✅ Simple — 5 minute learning curve
+- ✅ Isolated — agents can't accidentally read each other's stuff
+- ✅ Zero dependencies — only Python stdlib
+
+---
+
+## 📄 License
+
+[MIT](LICENSE) — do whatever you want with it.
